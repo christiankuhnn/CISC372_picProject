@@ -32,11 +32,10 @@ void* threadConvolute(void* args) {
     Image* srcImage = threadArgs->srcImage;
     Image* destImage = threadArgs->destImage;
 
-    // Copy the algorithm matrix from the arguments
-    Matrix algorithm;
+    // Copy the algorithm matrix from the algorithms array
     for (int i = 0; i < 3; i++) {
         for (int j = 0; j < 3; j++) {
-            algorithm[i][j] = threadArgs->algorithm[i][j];
+            threadArgs->algorithm[i][j] = algorithms[type][i][j];
         }
     }
 
@@ -47,7 +46,7 @@ void* threadConvolute(void* args) {
         for (int pix = 0; pix < srcImage->width; pix++) {
             for (int bit = 0; bit < srcImage->bpp; bit++) {
                 destImage->data[Index(pix, row, srcImage->width, bit, srcImage->bpp)] =
-                    getPixelValue(srcImage, pix, row, bit, algorithm);
+                    getPixelValue(srcImage, pix, row, bit, threadArgs->algorithm);
             }
         }
     }
