@@ -31,13 +31,10 @@ void* threadConvolute(void* args) {
     int thread_id = threadArgs->thread_id;
     Image* srcImage = threadArgs->srcImage;
     Image* destImage = threadArgs->destImage;
+    enum KernelTypes type = threadArgs->type;
 
-    // Copy the algorithm matrix from the algorithms array
-    for (int i = 0; i < 3; i++) {
-        for (int j = 0; j < 3; j++) {
-            threadArgs->algorithm[i][j] = algorithms[type][i][j];
-        }
-    }
+    // Access the appropriate algorithm matrix from the algorithms array
+    Matrix algorithm = algorithms[type];
 
     int start_row = thread_id * (srcImage->height / NUM_THREADS);
     int end_row = (thread_id == (NUM_THREADS - 1)) ? srcImage->height : (start_row + (srcImage->height / NUM_THREADS));
@@ -46,13 +43,14 @@ void* threadConvolute(void* args) {
         for (int pix = 0; pix < srcImage->width; pix++) {
             for (int bit = 0; bit < srcImage->bpp; bit++) {
                 destImage->data[Index(pix, row, srcImage->width, bit, srcImage->bpp)] =
-                    getPixelValue(srcImage, pix, row, bit, threadArgs->algorithm);
+                    getPixelValue(srcImage, pix, row, bit, algorithm);
             }
         }
     }
 
     pthread_exit(NULL);
 }
+
 
 int main(int argc, char** argv) {
     long t1, t2;
