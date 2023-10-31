@@ -48,7 +48,7 @@ void* processImage(void* arg) {
     for (int row = data->start_row; row < data->end_row; row++) {
         for (int pix = 0; pix < data->srcImage->width; pix++) {
             for (int bit = 0; bit < data->srcImage->bpp; bit++) {
-                uint8_t pixelValue = getPixelValue(data->srcImage, pix, row, bit, *(data->algorithm));
+                uint8_t pixelValue = getPixelValue(data->srcImage, pix, row, bit, data->algorithm);
 
                 pthread_mutex_lock(&mutex);
                 data->destImage->data[Index(pix, row, data->srcImage->width, bit, data->srcImage->bpp)] = pixelValue;
