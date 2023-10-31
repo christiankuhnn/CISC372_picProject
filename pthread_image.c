@@ -54,6 +54,16 @@ int main(int argc, char** argv) {
     }
     enum KernelTypes type = GetKernelType(argv[2]);
 
+    // Declare the algorithms array here
+    Matrix algorithms[] = {
+        {{0, -1, 0}, {-1, 4, -1}, {0, -1, 0}},
+        {{0, -1, 0}, {-1, 5, -1}, {0, -1, 0}},
+        {{1/9.0, 1/9.0, 1/9.0}, {1/9.0, 1/9.0, 1/9.0}, {1/9.0, 1/9.0, 1/9.0}},
+        {{1.0/16, 1.0/8, 1.0/16}, {1.0/8, 1.0/4, 1.0/8}, {1.0/16, 1.0/8, 1.0/16}},
+        {{-2, -1, 0}, {-1, 1, 1}, {0, 1, 2}},
+        {{0, 0, 0}, {0, 1, 0}, {0, 0, 0}}
+    };
+
     Image srcImage, destImage, bwImage;   
     srcImage.data = stbi_load(fileName, &srcImage.width, &srcImage.height, &srcImage.bpp, 0);
     if (!srcImage.data) {
