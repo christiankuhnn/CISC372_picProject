@@ -165,8 +165,8 @@ int main(int argc, char** argv) {
         pthread_join(threads[i], NULL);
     }
 
-    stb_write_png("output.png", destImage.width, destImage.height, destImage.bpp, destImage.data, destImage.bpp * destImage.width);
-    stb_image_free(srcImage.data);
+    stbi_write_png("output.png", destImage.width, destImage.height, destImage.bpp, destImage.data, destImage.bpp * destImage.width);
+    stbi_image_free(srcImage.data);
 
     free(destImage.data);
     t2 = time(NULL);
