@@ -26,6 +26,13 @@ double algorithms[][3][3] = {
     {{0.0, 0.0, 0.0}, {0.0, 1.0, 0.0}, {0.0, 0.0, 0.0}}
 };
 
+// Declaration of the getPixelValue function
+uint8_t getPixelValue(Image* srcImage, int x, int y, int bit, double algorithm[3][3]);
+
+// Declaration of the Usage and GetKernelType functions
+int Usage();
+enum KernelTypes GetKernelType(char* type);
+
 typedef struct {
     int thread_id;
     int start_row;
