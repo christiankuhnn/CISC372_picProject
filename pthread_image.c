@@ -31,7 +31,14 @@ void* threadConvolute(void* args) {
     int thread_id = threadArgs->thread_id;
     Image* srcImage = threadArgs->srcImage;
     Image* destImage = threadArgs->destImage;
-    Matrix algorithm = threadArgs->algorithm;
+
+    // Copy the algorithm matrix from the arguments
+    Matrix algorithm;
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+            algorithm[i][j] = threadArgs->algorithm[i][j];
+        }
+    }
 
     int start_row = thread_id * (srcImage->height / NUM_THREADS);
     int end_row = (thread_id == (NUM_THREADS - 1)) ? srcImage->height : (start_row + (srcImage->height / NUM_THREADS));
