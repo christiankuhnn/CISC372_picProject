@@ -80,6 +80,24 @@ void* applyConvolution(void* arg) {
     pthread_exit(NULL);
 }
 
+// Implementation of Usage function
+int Usage() {
+    printf("Usage: image <filename> <type>\n\twhere type is one of (edge, sharpen, blur, gauss, emboss, identity)\n");
+    return -1;
+}
+
+// Implementation of GetKernelType function
+enum KernelTypes GetKernelType(char* type) {
+    if (!strcmp(type, "edge")) return EDGE;
+    else if (!strcmp(type, "sharpen")) return SHARPEN;
+    else if (!strcmp(type, "blur")) return BLUR;
+    else if (!strcmp(type, "gauss")) return GAUSE_BLUR;
+    else if (!strcmp(type, "emboss")) return EMBOSS;
+    else return IDENTITY;
+}
+
+// ... Other functions and variable declarations ...
+
 int main(int argc, char** argv) {
     long t1, t2;
     t1 = time(NULL);
