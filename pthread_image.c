@@ -52,6 +52,7 @@ void* threadConvolute(void* args) {
 }
 
 
+
 int main(int argc, char** argv) {
     long t1, t2;
     t1 = time(NULL);
@@ -81,11 +82,11 @@ int main(int argc, char** argv) {
     // Create an array to hold thread arguments
     ThreadArgs thread_args[NUM_THREADS];
 
-    for (int i = 0; i < NUM_THREADS; i++) {
+      for (int i = 0; i < NUM_THREADS; i++) {
         thread_args[i].thread_id = i;
         thread_args[i].srcImage = &srcImage;
         thread_args[i].destImage = &destImage;
-        thread_args[i].algorithm = algorithms[type];
+        thread_args[i].type = type; // Pass the type as an argument
         int result = pthread_create(&threads[i], NULL, threadConvolute, (void*)&thread_args[i]);
         if (result) {
             printf("Error creating thread %d\n", i);
