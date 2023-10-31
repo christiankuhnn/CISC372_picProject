@@ -31,7 +31,7 @@ void* threadConvolute(void* args) {
     int thread_id = threadArgs->thread_id;
     Image* srcImage = threadArgs->srcImage;
     Image* destImage = threadArgs->destImage;
-    enum KernelTypes type = threadArgs->type;
+    enum KernelTypes type = threadArgs->type; // Pass the type as an argument
 
     // Access the appropriate algorithm matrix from the algorithms array
     Matrix algorithm = algorithms[type];
@@ -82,11 +82,12 @@ int main(int argc, char** argv) {
     // Create an array to hold thread arguments
     ThreadArgs thread_args[NUM_THREADS];
 
-      for (int i = 0; i < NUM_THREADS; i++) {
+       for (int i = 0; i < NUM_THREADS; i++) {
         thread_args[i].thread_id = i;
         thread_args[i].srcImage = &srcImage;
         thread_args[i].destImage = &destImage;
         thread_args[i].type = type; // Pass the type as an argument
+
         int result = pthread_create(&threads[i], NULL, threadConvolute, (void*)&thread_args[i]);
         if (result) {
             printf("Error creating thread %d\n", i);
