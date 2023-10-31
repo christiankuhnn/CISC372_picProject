@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "*.py": "python",
+        "stb_image.h": "c",
+        "stdlib.h": "c"
+    }
+}

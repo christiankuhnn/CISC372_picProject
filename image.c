@@ -6,11 +6,12 @@
 #include <pthread.h>
 #include <stdlib.h>
 #include "stb_image.h"
+#include "stb_image_write.h"
 
 #define NUM_THREADS 4
 
 // An array of kernel matrices to be used for image convolution.
-// The indexes of these match the enumeration from the header file. ie. algorithms[BLUR] returns the kernel corresponding to a box blur.
+// The indexes of these match the enumeration from the header file.
 Matrix algorithms[] = {
     {{0, -1, 0}, {-1, 4, -1}, {0, -1, 0}},
     {{0, -1, 0}, {-1, 5, -1}, {0, -1, 0}},
@@ -20,22 +21,18 @@ Matrix algorithms[] = {
     {{0, 0, 0}, {0, 1, 0}, {0, 0, 0}}
 };
 
-//getPixelValue - Computes the value of a specific pixel on a specific channel using the selected convolution kernel
-//Paramters: srcImage:  An Image struct populated with the image being convoluted
-//           x: The x coordinate of the pixel
-//          y: The y coordinate of the pixel
-//          bit: The color channel being manipulated
-//          algorithm: The 3x3 kernel matrix to use for the convolution
-//Returns: The new value for this x, y pixel and bit channel
+// Function to compute the value of a specific pixel on a specific channel using the selected convolution kernel
 uint8_t getPixelValue(Image* srcImage, int x, int y, int bit, Matrix algorithm) {
-    int px, mx, py, my, i, span;
-    span = srcImage->width * srcImage->bpp;
-    // for the edge pixes, just reuse the edge pixel
+    int px, mx, py, my;
+    int span = srcImage->width * srcImage->bpp;
     px = x + 1; py = y + 1; mx = x - 1; my = y - 1;
+
+    // Handle edge pixels
     if (mx < 0) mx = 0;
     if (my < 0) my = 0;
     if (px >= srcImage->width) px = srcImage->width - 1;
     if (py >= srcImage->height) py = srcImage->height - 1;
+
     uint8_t result =
         algorithm[0][0] * srcImage->data[Index(mx, my, srcImage->width, bit, srcImage->bpp)] +
         algorithm[0][1] * srcImage->data[Index(x, my, srcImage->width, bit, srcImage->bpp)] +
@@ -46,36 +43,26 @@ uint8_t getPixelValue(Image* srcImage, int x, int y, int bit, Matrix algorithm) 
         algorithm[2][0] * srcImage->data[Index(mx, py, srcImage->width, bit, srcImage->bpp)] +
         algorithm[2][1] * srcImage->data[Index(x, py, srcImage->width, bit, srcImage->bpp)] +
         algorithm[2][2] * srcImage->data[Index(px, py, srcImage->width, bit, srcImage->bpp)];
+
     return result;
 }
 
-//convolute:  Applies a kernel matrix to an image
-//Parameters: srcImage: The image being convoluted
-//            destImage: A pointer to a  pre-allocated (including space for the pixel array) structure to receive the convoluted image.  It should be the same size as srcImage
-//            algorithm: The kernel matrix to use for the convolution
-//Returns: Nothing
-void convolute(Image* srcImage, Image* destImage, Matrix algorithm) {
-    int row, pix, bit, span;
-    span = srcImage->bpp * srcImage->bpp;
-    for (row = 0; row < srcImage->height; row++) {
-        for (pix = 0; pix < srcImage->width; pix++) {
-            for (bit = 0; bit < srcImage->bpp; bit++) {
+// Function to apply a kernel matrix to an image
+void convolute(Image* srcImage, Image* destImage, Matrix algorithm, int startRow, int endRow) {
+    for (int row = startRow; row < endRow; row++) {
+        for (int pix = 0; pix < srcImage->width; pix++) {
+            for (int bit = 0; bit < srcImage->bpp; bit++) {
                 destImage->data[Index(pix, row, srcImage->width, bit, srcImage->bpp)] = getPixelValue(srcImage, pix, row, bit, algorithm);
             }
         }
     }
 }
 
-//Usage: Prints usage information for the program
-//Returns: -1
 int Usage() {
     printf("Usage: image <filename> <type>\n\twhere type is one of (edge, sharpen, blur, gauss, emboss, identity)\n");
     return -1;
 }
 
-//GetKernelType: Converts the string name of a convolution into a value from the KernelTypes enumeration
-//Parameters: type: A string representation of the type
-//Returns: an appropriate entry from the KernelTypes enumeration, defaults to IDENTITY, which does nothing but copy the image.
 enum KernelTypes GetKernelType(char* type) {
     if (!strcmp(type, "edge")) return EDGE;
     else if (!strcmp(type, "sharpen")) return SHARPEN;
@@ -89,35 +76,14 @@ typedef struct {
     int thread_id;
     Image* srcImage;
     Image* destImage;
-    enum KernelTypes algorithm_type; // New field to hold the algorithm type
+    Matrix algorithm;
+    int startRow;
+    int endRow;
 } ThreadData;
 
-// Define the pthread function for convolution
 void* convoluteThread(void* arg) {
     ThreadData* data = (ThreadData*)arg;
-    int start = data->thread_id * (data->srcImage->height / NUM_THREADS);
-    int end = (data->thread_id + 1) * (data->srcImage->height / NUM_THREADS);
-    
-    // Get the algorithm matrix based on the algorithm type
-    Matrix algorithm;
-    switch (data->algorithm_type) {
-        case EDGE:
-            memcpy(algorithm, algorithms[EDGE], sizeof(Matrix));
-            break;
-        case SHARPEN:
-            memcpy(algorithm, algorithms[SHARPEN], sizeof(Matrix));
-            break;
-        // Repeat this for all other cases...
-    }
-    
-    for (int row = start; row < end; row++) {
-        // Convolution logic for the specified rows
-        for (int pix = 0; pix < data->srcImage->width; pix++) {
-            for (int bit = 0; bit < data->srcImage->bpp; bit++) {
-                data->destImage->data[Index(pix, row, data->srcImage->width, bit, data->srcImage->bpp)] = getPixelValue(data->srcImage, pix, row, bit, algorithm);
-            }
-        }
-    }
+    convolute(data->srcImage, data->destImage, data->algorithm, data->startRow, data->endRow);
     pthread_exit(NULL);
 }
 
@@ -133,7 +99,7 @@ int main(int argc, char** argv) {
     }
     enum KernelTypes type = GetKernelType(argv[2]);
 
-    Image srcImage, destImage, bwImage;
+    Image srcImage, destImage;
     srcImage.data = stbi_load(fileName, &srcImage.width, &srcImage.height, &srcImage.bpp, 0);
     if (!srcImage.data) {
         printf("Error loading file %s.\n", fileName);
@@ -150,15 +116,16 @@ int main(int argc, char** argv) {
     // Create an array of thread data
     ThreadData thread_data[NUM_THREADS];
 
-    // Create and start the threads
-       for (int i = 0; i < NUM_THREADS; i++) {
-    thread_data[i].thread_id = i;
-    thread_data[i].srcImage = &srcImage;
-    thread_data[i].destImage = &destImage;
-    thread_data[i].algorithm_type = type; // Pass the algorithm type
-    pthread_create(&threads[i], NULL, convoluteThread, (void*)&thread_data[i]);
-}
-
+    int rowsPerThread = srcImage.height / NUM_THREADS;
+    for (int i = 0; i < NUM_THREADS; i++) {
+        thread_data[i].thread_id = i;
+        thread_data[i].srcImage = &srcImage;
+        thread_data[i].destImage = &destImage;
+        thread_data[i].startRow = i * rowsPerThread;
+        thread_data[i].endRow = (i == NUM_THREADS - 1) ? srcImage.height : (i + 1) * rowsPerThread;
+        memcpy(thread_data[i].algorithm, algorithms[type], sizeof(Matrix));
+        pthread_create(&threads[i], NULL, convoluteThread, (void*)&thread_data[i]);
+    }
 
     // Wait for all threads to finish
     for (int i = 0; i < NUM_THREADS; i++) {
@@ -167,8 +134,8 @@ int main(int argc, char** argv) {
 
     stbi_write_png("output.png", destImage.width, destImage.height, destImage.bpp, destImage.data, destImage.bpp * destImage.width);
     stbi_image_free(srcImage.data);
-
     free(destImage.data);
+
     t2 = time(NULL);
     printf("Took %ld seconds\n", t2 - t1);
     return 0;
