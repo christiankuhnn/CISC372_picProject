@@ -5,6 +5,7 @@
 #include "image.h"
 #include <pthread.h>
 #include <stdlib.h>
+#include "stb_image.h"
 
 #define NUM_THREADS 4
 
