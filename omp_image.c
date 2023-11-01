@@ -13,15 +13,12 @@
 
 #define NUM_THREADS 10
 
-
 typedef struct inputStruct {
     Image* srcImage;
     Image* destImage;
     enum KernelTypes type;
     long rank;
 } inputStruct;
-
-
 
 Matrix algorithms[] = {
     {{0, -1, 0}, {-1, 4, -1}, {0, -1, 0}},
@@ -54,6 +51,29 @@ uint8_t getPixelValue(Image* srcImage, int x, int y, int bit, Matrix algorithm) 
         algorithm[2][1] * srcImage->data[Index(x, py, srcImage->width, bit, srcImage->bpp)] +
         algorithm[2][2] * srcImage->data[Index(px, py, srcImage->width, bit, srcImage->bpp)];
     return result;
+}
+
+// Define the threaded_convolute function
+void threaded_convolute(inputStruct* params) {
+    Image* srcImage = params->srcImage;
+    Image* destImage = params->destImage;
+    enum KernelTypes type = params->type;
+    long rank = params->rank;
+
+    // Modify this part to handle the convolution process
+    // Use the 'type' parameter to select the appropriate convolution algorithm (e.g., algorithms[type])
+    
+    // Example code (modify this as needed):
+    int rowStart = rank * (srcImage->height / NUM_THREADS);
+    int rowEnd = (rank + 1) * (srcImage->height / NUM_THREADS);
+    for (int row = rowStart; row < rowEnd; row++) {
+        for (int pix = 0; pix < srcImage->width; pix++) {
+            for (int bit = 0; bit < srcImage->bpp; bit++) {
+                destImage->data[Index(pix, row, srcImage->width, bit, srcImage->bpp)] =
+                    getPixelValue(srcImage, pix, row, bit, algorithms[type]);
+            }
+        }
+    }
 }
 
 void convolute(Image* srcImage, Image* destImage, Matrix algorithm) {
