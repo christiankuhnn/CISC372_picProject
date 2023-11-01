@@ -11,6 +11,18 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
+#define NUM_THREADS 10
+
+
+typedef struct inputStruct {
+    Image* srcImage;
+    Image* destImage;
+    enum KernelTypes type;
+    long rank;
+} inputStruct;
+
+
+
 Matrix algorithms[] = {
     {{0, -1, 0}, {-1, 4, -1}, {0, -1, 0}},
     {{0, -1, 0}, {-1, 5, -1}, {0, -1, 0}},
